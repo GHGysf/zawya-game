@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Toe Guardians: Spit Defense</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky-top:#7fe9ff;
+  --sky-bottom:#cdf6ff;
+  --pink:#ff6fa8;
+  --pink-dark:#d63d80;
+  --yellow:#ffd23f;
+  --yellow-dark:#e6a700;
+  --purple:#7b5cf0;
+  --purple-dark:#4b3aa8;
+  --green:#3ad29f;
+  --green-dark:#1f9e76;
+  --red:#ff4757;
+  --red-dark:#c52d3a;
+  --ink:#241b4e;
+  --cream:#fff8ef;
+  --panel:#2b1f5c;
+  font-family:'Nunito', system-ui, sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{
+  margin:0;padding:0;width:100%;height:100%;overflow:hidden;
+  background:#150f30;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+body{
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(ellipse at 30% 20%, #2c2070 0%, #150f30 60%);
+}
+#stageOuter{
+  position:relative;
+  width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;
+}
+#stage{
+  position:relative;
+  background:#000;
+  box-shadow:0 0 0 6px #3a2b7a, 0 0 0 10px #1c1340, 0 20px 60px rgba(0,0,0,.6);
+  border-radius:14px;
+  overflow:hidden;
+}
+canvas#game{
+  position:absolute;top:0;left:0;width:100%;height:100%;display:block;
+}
+.hidden{display:none !important;}
+
+/* ---------- HUD ---------- */
+#hud{
+  position:absolute;top:0;left:0;right:0;
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:10px 14px;
+  pointer-events:none;
+  font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;
+  z-index:5;
+}
+.hud-chip{
+  background:rgba(36,27,78,.78);
+  border:2px solid rgba(255,255,255,.18);
+  border-radius:12px;
+  padding:5px 12px;
+  color:var(--cream);
+  font-weight:700;
+  font-size:15px;
+  display:flex;align-items:center;gap:6px;
+  box-shadow:0 3px 0 rgba(0,0,0,.25);
+  pointer-events:auto;
+}
+.hud-left{display:flex;flex-direction:column;gap:6px;}
+.hud-right{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.hud-row{display:flex;gap:6px;}
+#waveChip{color:var(--yellow);}
+#scoreChip{color:#9be8ff;}
+#coinChip{color:var(--yellow);}
+.iconBtn{
+  width:34px;height:34px;border-radius:10px;
+  background:rgba(36,27,78,.78);border:2px solid rgba(255,255,255,.18);
+  color:var(--cream);font-size:16px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;pointer-events:auto;
+  box-shadow:0 3px 0 rgba(0,0,0,.25);
+}
+.iconBtn:active{transform:translateY(2px);box-shadow:none;}
+
+#zoneHpWrap{
+  position:absolute;
+  left:50%;top:8px;transform:translateX(-50%);
+  width:280px;
+  pointer-events:none;
+  z-index:5;
+  text-align:center;
+}
+#zoneHpLabel{
+  font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;font-weight:800;color:#ffdcec;
+  font-size:13px;letter-spacing:.5px;text-shadow:0 2px 0 rgba(0,0,0,.4);
+  margin-bottom:2px;
+}
+#zoneHpBarOuter{
+  width:100%;height:16px;border-radius:10px;
+  background:rgba(20,12,40,.7);
+  border:2px solid rgba(255,255,255,.25);
+  overflow:hidden;
+}
+#zoneHpBarInner{
+  height:100%;width:100%;
+  background:linear-gradient(180deg,#ff9fc4,var(--pink) 60%,var(--pink-dark));
+  transition:width .25s ease;
+}
+
+/* ---------- charge meter ---------- */
+#chargeWrap{
+  position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
+  width:160px;height:10px;border-radius:8px;
+  background:rgba(20,12,40,.6);border:2px solid rgba(255,255,255,.2);
+  overflow:hidden;z-index:5;pointer-events:none;opacity:0;transition:opacity .15s;
+}
+#chargeWrap.show{opacity:1;}
+#chargeInner{height:100%;width:0%;background:linear-gradient(90deg,var(--green),var(--yellow));}
+
+/* ---------- overlays ---------- */
+.overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,rgba(21,15,48,.85),rgba(10,7,28,.95));
+  z-index:20;
+  padding:20px;
+  text-align:center;
+}
+.panel{
+  max-width:560px;width:100%;
+  background:linear-gradient(180deg,#352567,#241a4d);
+  border:3px solid #5942b8;
+  border-radius:20px;
+  padding:22px 26px 26px;
+  box-shadow:0 12px 0 rgba(0,0,0,.35), 0 0 40px rgba(123,92,240,.35);
+  color:var(--cream);
+  max-height:92vh;
+  overflow-y:auto;
+}
+.panel h1{
+  font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;
+  font-size:30px;margin:0 0 4px;
+  color:var(--yellow);
+  text-shadow:0 3px 0 var(--pink-dark), 0 0 18px rgba(255,210,63,.5);
+  letter-spacing:.5px;
+}
+.panel h2{
+  font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;
+  font-size:20px;margin:0 0 10px;color:#ffdcec;
+}
+.subtitle{font-size:14px;color:#cfc4ff;margin-bottom:14px;font-weight:600;}
+.bigBtn{
+  font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;
+  font-size:19px;font-weight:700;
+  color:#2a1750;
+  background:linear-gradient(180deg,#ffe27a,var(--yellow) 55%,var(--yellow-dark));
+  border:none;border-radius:14px;
+  padding:13px 26px;
+  cursor:pointer;
+  box-shadow:0 6px 0 #a87a00, 0 10px 18px rgba(0,0,0,.35);
+  margin-top:10px;
+  transition:transform .08s;
+}
+.bigBtn:active{transform:translateY(5px);box-shadow:0 1px 0 #a87a00;}
+.bigBtn.pink{background:linear-gradient(180deg,#ff9fc4,var(--pink) 55%,var(--pink-dark));box-shadow:0 6px 0 #8f2454, 0 10px 18px rgba(0,0,0,.35);color:#3a0f25;}
+.bigBtn.pink:active{box-shadow:0 1px 0 #8f2454;}
+.bigBtn.green{background:linear-gradient(180deg,#9af2d6,var(--green) 55%,var(--green-dark));box-shadow:0 6px 0 #11604a, 0 10px 18px rgba(0,0,0,.35);color:#063a2c;}
+.bigBtn.green:active{box-shadow:0 1px 0 #11604a;}
+.bigBtn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:0 6px 0 rgba(0,0,0,.25);}
+
+.monsterRow{display:flex;justify-content:center;gap:10px;margin:14px 0;flex-wrap:wrap;}
+.monsterChip{
+  background:rgba(0,0,0,.22);border-radius:12px;padding:8px 6px;width:96px;
+  font-size:11px;font-weight:700;color:#e7defc;
+}
+.monsterChip canvas{display:block;margin:0 auto 4px;}
+.controlsHint{
+  display:flex;justify-content:center;gap:18px;margin-top:12px;font-size:12px;color:#bcaef0;flex-wrap:wrap;
+}
+.controlsHint b{color:#fff;}
+
+/* shop */
+#shopGrid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;text-align:left;
+}
+.upCard{
+  background:rgba(0,0,0,.25);border:2px solid rgba(255,255,255,.12);border-radius:14px;
+  padding:10px 12px;display:flex;flex-direction:column;gap:6px;
+}
+.upCard h3{margin:0;font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;font-size:15px;color:#fff;display:flex;align-items:center;gap:6px;}
+.upCard p{margin:0;font-size:11.5px;color:#cfc4ff;line-height:1.3;}
+.upLevels{display:flex;gap:3px;margin:2px 0;}
+.upLevels span{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.15);}
+.upLevels span.filled{background:var(--green);}
+.upBuyBtn{
+  font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;font-weight:700;font-size:13px;
+  background:linear-gradient(180deg,#ffe27a,var(--yellow));
+  border:none;border-radius:9px;padding:7px 8px;cursor:pointer;color:#2a1750;
+  box-shadow:0 3px 0 #a87a00;
+}
+.upBuyBtn:active{transform:translateY(2px);box-shadow:none;}
+.upBuyBtn:disabled{opacity:.35;cursor:not-allowed;}
+.upBuyBtn.maxed{background:linear-gradient(180deg,#9af2d6,var(--green));box-shadow:0 3px 0 #11604a;}
+
+#shopCoin{color:var(--yellow);font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;font-size:18px;font-weight:800;}
+
+/* game over */
+#finalStats{display:flex;justify-content:center;gap:22px;margin:10px 0 6px;}
+.statBox{background:rgba(0,0,0,.25);border-radius:12px;padding:8px 16px;}
+.statBox .num{font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;font-size:24px;color:var(--yellow);}
+.statBox .lbl{font-size:11px;color:#cfc4ff;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+#newHighBadge{
+  display:none;font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;color:#ff9fc4;font-weight:800;font-size:15px;margin-bottom:6px;
+  animation:pop 1s infinite alternate;
+}
+@keyframes pop{from{transform:scale(1);}to{transform:scale(1.08);}}
+
+/* rotate warning */
+#rotateWarn{
+  position:absolute;inset:0;z-index:50;background:#150f30;color:#fff;
+  display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;
+  font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;
+}
+#rotateWarn .ico{font-size:46px;margin-bottom:10px;animation:spinrot 1.6s ease-in-out infinite;}
+@keyframes spinrot{0%,100%{transform:rotate(0deg);}50%{transform:rotate(-90deg);}}
+
+/* ---------- touch controls ---------- */
+#touchLayer{
+  position:absolute;inset:0;z-index:8;pointer-events:none;display:none;
+}
+#joyBase{
+  position:absolute;left:26px;bottom:26px;width:118px;height:118px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.3);
+  pointer-events:auto;
+}
+#joyStick{
+  position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;
+  background:rgba(255,255,255,.45);border:3px solid rgba(255,255,255,.7);
+  transform:translate(-50%,-50%);
+}
+#fireBtn{
+  position:absolute;right:30px;bottom:30px;width:104px;height:104px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #9af2d6, var(--green) 60%, var(--green-dark));
+  border:4px solid rgba(255,255,255,.55);
+  pointer-events:auto;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Baloo 2','Comic Sans MS','Marker Felt',cursive,sans-serif;font-weight:800;color:#06311f;font-size:13px;text-align:center;
+  box-shadow:0 6px 0 rgba(0,0,0,.3);
+}
+#fireBtn:active{transform:translateY(3px);}
+@media (hover:hover) and (pointer:fine){
+  #touchLayer{display:none !important;}
+}
+@media (hover:none), (pointer:coarse){
+  #touchLayer{display:block;}
+}
+
+#muteToggle.off::after{content:" \1F507";}
+</style>
+</head>
+<body>
+
+<div id="stageOuter">
+  <div id="stage">
+    <canvas id="game"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hud-left">
+        <div class="hud-chip" id="waveChip">🌊 Wave 1</div>
+        <div class="hud-row">
+          <div class="hud-chip" id="scoreChip">⭐ 0</div>
+          <div class="hud-chip" id="coinChip">🪙 0</div>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-row">
+          <div class="iconBtn" id="muteBtn" title="Mute">🔊</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="zoneHpWrap">
+      <div id="zoneHpLabel">💖 MAGIC TOES 💖</div>
+      <div id="zoneHpBarOuter"><div id="zoneHpBarInner"></div></div>
+    </div>
+
+    <div id="chargeWrap"><div id="chargeInner"></div></div>
+
+    <!-- touch controls -->
+    <div id="touchLayer">
+      <div id="joyBase"><div id="joyStick"></div></div>
+      <div id="fireBtn">HOLD<br>TO SPIT</div>
+    </div>
+
+    <!-- START MENU -->
+    <div class="overlay" id="menuOverlay">
+      <div class="panel">
+        <h1>🦶 TOE GUARDIANS 🦶</h1>
+        <div class="subtitle">A Spit-Powered Defense Game</div>
+        <p style="font-size:13px;line-height:1.5;color:#e7defc;margin:0 0 6px;">
+          Monsters are coming for the sacred <b>Magical Toes</b>. You can't punch, you can't shoot bullets —
+          all you've got is the funkiest, slimiest <b>spit attack</b> in the land. Hold to charge, release to launch. Don't let them nibble those toes!
+        </p>
+        <div class="monsterRow" id="menuMonsterRow"></div>
+        <div class="controlsHint">
+          <span><b>WASD / Arrows</b> — move</span>
+          <span><b>Mouse / Hold Space</b> — aim &amp; spit</span>
+          <span><b>Mobile</b> — joystick + spit button</span>
+        </div>
+        <button class="bigBtn" id="startBtn">▶ START DEFENDING</button>
+        <div style="font-size:11px;margin-top:10px;color:#9d8fd1;">High Score: <span id="menuHighScore">0</span></div>
+      </div>
+    </div>
+
+    <!-- SHOP -->
+    <div class="overlay hidden" id="shopOverlay">
+      <div class="panel">
+        <h2 id="shopTitle">Wave Cleared! 🎉</h2>
+        <div id="shopCoin">🪙 <span id="shopCoinAmt">0</span></div>
+        <div id="shopGrid"></div>
+        <button class="bigBtn green" id="nextWaveBtn">NEXT WAVE ▶</button>
+      </div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div class="overlay hidden" id="gameOverOverlay">
+      <div class="panel">
+        <h1 style="color:var(--red);text-shadow:0 3px 0 #6e1018;">😵 GAME OVER</h1>
+        <div class="subtitle">The toes have been... tickled into oblivion.</div>
+        <div id="newHighBadge">🏆 NEW HIGH SCORE!</div>
+        <div id="finalStats">
+          <div class="statBox"><div class="num" id="finalScore">0</div><div class="lbl">Score</div></div>
+          <div class="statBox"><div class="num" id="finalWave">1</div><div class="lbl">Wave</div></div>
+          <div class="statBox"><div class="num" id="finalHigh">0</div><div class="lbl">Best</div></div>
+        </div>
+        <button class="bigBtn pink" id="restartBtn">🔁 TRY AGAIN</button>
+      </div>
+    </div>
+
+    <!-- rotate -->
+    <div id="rotateWarn">
+      <div class="ico">📱</div>
+      <div>Please rotate your device<br>to landscape mode!</div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =========================================================================
+   TOE GUARDIANS — Spit Defense
+   Single-file vanilla JS canvas game. No external assets.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------
+   CONSTANTS
+--------------------------------------------------------------------- */
+const VW = 1280, VH = 720; // logical resolution (16:9)
+const ZONE_LINE_X = 930;   // x-threshold: enemies "reach" the toes here
+const ZONE_Y = 350;
+const PLAYER_X_MIN = 70, PLAYER_X_MAX = 270;
+const PLAYER_Y_MIN = 110, PLAYER_Y_MAX = 610;
+const GROUND_TOP = 90;     // playable vertical band top
+const GROUND_BOT = 640;    // playable vertical band bottom
+
+const LS_HIGHSCORE = 'toeDefense_highScore_v1';
+
+/* ---------------------------------------------------------------------
+   UTILITIES
+--------------------------------------------------------------------- */
+const rand = (a, b) => a + Math.random() * (b - a);
+const randInt = (a, b) => Math.floor(rand(a, b + 1));
+const choice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const dist = (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1);
+const TAU = Math.PI * 2;
+
+function roundRect(ctx, x, y, w, h, r) {
+  if (typeof r === 'number') r = { tl: r, tr: r, br: r, bl: r };
+  ctx.beginPath();
+  ctx.moveTo(x + r.tl, y);
+  ctx.lineTo(x + w - r.tr, y);
+  ctx.arcTo(x + w, y, x + w, y + r.tr, r.tr);
+  ctx.lineTo(x + w, y + h - r.br);
+  ctx.arcTo(x + w, y + h, x + w - r.br, y + h, r.br);
+  ctx.lineTo(x + r.bl, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r.bl, r.bl);
+  ctx.lineTo(x, y + r.tl);
+  ctx.arcTo(x, y, x + r.tl, y, r.tl);
+  ctx.closePath();
+}
+
+/* ---------------------------------------------------------------------
+   AUDIO ENGINE (synthesized — zero external files)
+--------------------------------------------------------------------- */
+class AudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+    this.master = null;
+  }
+  ensure() {
+    if (this.ctx) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AC();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.55;
+      this.master.connect(this.ctx.destination);
+    } catch (e) { this.ctx = null; }
+  }
+  resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+  setMuted(m) { this.muted = m; if (this.master) this.master.gain.value = m ? 0 : 0.55; }
+
+  tone({ freq = 440, dur = 0.15, type = 'sine', vol = 0.4, slideTo = null, delay = 0, attack = 0.005 }) {
+    if (!this.ctx || this.muted) return;
+    const t0 = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (slideTo !== null) osc.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), t0 + dur);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol, t0 + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain).connect(this.master);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+  noiseBurst({ dur = 0.18, vol = 0.3, delay = 0, filterFreq = 1200 }) {
+    if (!this.ctx || this.muted) return;
+    const t0 = this.ctx.currentTime + delay;
+    const bufferSize = this.ctx.sampleRate * dur;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    const filt = this.ctx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.value = filterFreq;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(vol, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    src.connect(filt).connect(gain).connect(this.master);
+    src.start(t0);
+  }
+  // --- specific SFX ---
+  sfxCharge() { this.tone({ freq: 220, slideTo: 480, dur: 0.5, type: 'sawtooth', vol: 0.12 }); }
+  sfxSpit() {
+    this.tone({ freq: 380, slideTo: 180, dur: 0.16, type: 'square', vol: 0.22 });
+    this.noiseBurst({ dur: 0.08, vol: 0.12, filterFreq: 2200 });
+  }
+  sfxHit() { this.noiseBurst({ dur: 0.12, vol: 0.28, filterFreq: 900 }); this.tone({ freq: 180, slideTo: 80, dur: 0.12, type: 'sine', vol: 0.2 }); }
+  sfxDeath(pitch = 1) {
+    this.tone({ freq: 300 * pitch, slideTo: 60 * pitch, dur: 0.32, type: 'sawtooth', vol: 0.22 });
+    this.tone({ freq: 500 * pitch, slideTo: 700 * pitch, dur: 0.08, type: 'square', vol: 0.08, delay: 0.02 });
+  }
+  sfxZoneHit() {
+    this.tone({ freq: 260, slideTo: 140, dur: 0.22, type: 'triangle', vol: 0.3 });
+    this.noiseBurst({ dur: 0.14, vol: 0.2, filterFreq: 600 });
+  }
+  sfxCoin() { this.tone({ freq: 880, dur: 0.07, type: 'square', vol: 0.16 }); this.tone({ freq: 1320, dur: 0.09, type: 'square', vol: 0.14, delay: 0.05 }); }
+  sfxWaveStart() {
+    [0, 1, 2].forEach(i => this.tone({ freq: 440 + i * 110, dur: 0.14, type: 'triangle', vol: 0.18, delay: i * 0.1 }));
+  }
+  sfxUpgrade() { this.tone({ freq: 520, slideTo: 1040, dur: 0.22, type: 'sine', vol: 0.2 }); }
+  sfxBoss() { this.tone({ freq: 80, dur: 0.9, type: 'sawtooth', vol: 0.3 }); this.tone({ freq: 60, dur: 0.9, type: 'square', vol: 0.18, delay: 0.05 }); }
+  sfxGameOver() {
+    [440, 380, 320, 240].forEach((f, i) => this.tone({ freq: f, dur: 0.35, type: 'sawtooth', vol: 0.22, delay: i * 0.18 }));
+  }
+  sfxDeflect() { this.tone({ freq: 900, slideTo: 1400, dur: 0.08, type: 'square', vol: 0.15 }); }
+  sfxClick() { this.tone({ freq: 600, dur: 0.06, type: 'square', vol: 0.12 }); }
+}
+const Audio_ = new AudioEngine();
+
+/* ---------------------------------------------------------------------
+   INPUT MANAGER
+--------------------------------------------------------------------- */
+const Input = {
+  keys: {},
+  moveVec: { x: 0, y: 0 },
+  pointer: { x: VW * 0.5, y: VH * 0.5, active: false },
+  aimAngle: 0,
+  charging: false,
+  chargeStart: 0,
+  // touch
+  joyActive: false, joyId: null, joyVec: { x: 0, y: 0 },
+  fireId: null, fireOrigin: { x: 0, y: 0 }, fireCur: { x: 0, y: 0 },
+  init(canvas, toCanvasCoords) {
+    window.addEventListener('keydown', (e) => {
+      this.keys[e.code] = true;
+      if (e.code === 'Space') { e.preventDefault(); this._spaceDown(); }
+    });
+    window.addEventListener('keyup', (e) => {
+      this.keys[e.code] = false;
+      if (e.code === 'Space') { e.preventDefault(); this._spaceUp(); }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      const p = toCanvasCoords(e.clientX, e.clientY);
+      this.pointer.x = p.x; this.pointer.y = p.y; this.pointer.active = true;
+    });
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      const p = toCanvasCoords(e.clientX, e.clientY);
+      this.pointer.x = p.x; this.pointer.y = p.y;
+      this._fireDown();
+    });
+    window.addEventListener('mouseup', (e) => { if (e.button === 0) this._fireUp(); });
+
+    // touch joystick + fire button are bound externally (DOM elements) via bindTouchControls()
+    this._spaceDownCb = null;
+    this._spaceUpCb = null;
+    this._fireDownCb = null;
+    this._fireUpCb = null;
+  },
+  onFireDown(cb) { this._fireDownCb = cb; },
+  onFireUp(cb) { this._fireUpCb = cb; },
+  _spaceDown() { this._fireDown(); },
+  _spaceUp() { this._fireUp(); },
+  _fireDown() { if (this._fireDownCb) this._fireDownCb(); },
+  _fireUp() { if (this._fireUpCb) this._fireUpCb(); },
+  getMoveVector() {
+    let x = 0, y = 0;
+    if (this.keys['KeyA'] || this.keys['ArrowLeft']) x -= 1;
+    if (this.keys['KeyD'] || this.keys['ArrowRight']) x += 1;
+    if (this.keys['KeyW'] || this.keys['ArrowUp']) y -= 1;
+    if (this.keys['KeyS'] || this.keys['ArrowDown']) y += 1;
+    if (this.joyActive) { x += this.joyVec.x; y += this.joyVec.y; }
+    const len = Math.hypot(x, y);
+    if (len > 1) { x /= len; y /= len; }
+    return { x, y };
+  }
+};
+
+/* ---------------------------------------------------------------------
+   PARTICLES & FLOATING TEXT
+--------------------------------------------------------------------- */
+class Particle {
+  constructor(x, y, vx, vy, color, life, size, gravity = 260, shape = 'circle') {
+    this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+    this.color = color; this.life = life; this.maxLife = life;
+    this.size = size; this.gravity = gravity; this.shape = shape;
+    this.rot = rand(0, TAU); this.vr = rand(-6, 6);
+  }
+  update(dt) {
+    this.vy += this.gravity * dt;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.rot += this.vr * dt;
+    this.life -= dt;
+    return this.life > 0;
+  }
+  draw(ctx) {
+    const a = clamp(this.life / this.maxLife, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rot);
+    ctx.fillStyle = this.color;
+    const s = this.size * (0.5 + a * 0.5);
+    if (this.shape === 'circle') {
+      ctx.beginPath(); ctx.arc(0, 0, s, 0, TAU); ctx.fill();
+    } else if (this.shape === 'star') {
+      drawStar(ctx, 0, 0, s, s * 0.45, 5);
+      ctx.fill();
+    } else {
+      ctx.fillRect(-s / 2, -s / 2, s, s);
+    }
+    ctx.restore();
+  }
+}
+
+class FloatingText {
+  constructor(x, y, text, color, size = 18, vy = -45, life = 0.9) {
+    this.x = x; this.y = y; this.text = text; this.color = color;
+    this.size = size; this.vy = vy; this.life = life; this.maxLife = life;
+  }
+  update(dt) { this.y += this.vy * dt; this.life -= dt; return this.life > 0; }
+  draw(ctx) {
+    const a = clamp(this.life / this.maxLife, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.font = `800 ${this.size}px "Baloo 2", "Comic Sans MS", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(30,15,50,.8)';
+    ctx.strokeText(this.text, this.x, this.y);
+    ctx.fillStyle = this.color;
+    ctx.fillText(this.text, this.x, this.y);
+    ctx.restore();
+  }
+}
+
+function drawStar(ctx, cx, cy, outerR, innerR, points) {
+  ctx.beginPath();
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    const a = (Math.PI / points) * i - Math.PI / 2;
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+/* ---------------------------------------------------------------------
+   PLAYER
+--------------------------------------------------------------------- */
+class Player {
+  constructor() {
+    this.x = 150; this.y = 360;
+    this.speed = 230;
+    this.radius = 26;
+    this.facing = 1;
+    this.bob = 0;
+    this.squish = 0; // recoil squish on fire
+    this.cheekPuff = 0; // charge visual
+    this.eyeBlink = 0;
+    this.nextBlink = rand(2, 5);
+  }
+  update(dt, moveVec) {
+    this.x = clamp(this.x + moveVec.x * this.speed * dt, PLAYER_X_MIN, PLAYER_X_MAX);
+    this.y = clamp(this.y + moveVec.y * this.speed * dt, PLAYER_Y_MIN, PLAYER_Y_MAX);
+    const moving = Math.hypot(moveVec.x, moveVec.y) > 0.05;
+    this.bob += dt * (moving ? 9 : 3.2);
+    this.squish = Math.max(0, this.squish - dt * 4);
+    this.nextBlink -= dt;
+    if (this.nextBlink <= 0) { this.eyeBlink = 0.12; this.nextBlink = rand(2.5, 5.5); }
+    if (this.eyeBlink > 0) this.eyeBlink -= dt;
+  }
+  draw(ctx, aimAngle, charge) {
+    const bobY = Math.sin(this.bob) * 4;
+    const sq = 1 - this.squish * 0.18;
+    ctx.save();
+    ctx.translate(this.x, this.y + bobY);
+    ctx.scale(sq, 1 / sq);
+
+    // shadow
+    ctx.save();
+    ctx.translate(0, 34 - bobY * 0.3);
+    ctx.scale(1, 0.32);
+    ctx.fillStyle = 'rgba(10,5,25,.35)';
+    ctx.beginPath(); ctx.arc(0, 0, 26, 0, TAU); ctx.fill();
+    ctx.restore();
+
+    // body (cute round blob hero)
+    const bodyGrad = ctx.createRadialGradient(-8, -10, 4, 0, 0, 30);
+    bodyGrad.addColorStop(0, '#9cf0c8');
+    bodyGrad.addColorStop(1, '#27b889');
+    ctx.fillStyle = bodyGrad;
+    ctx.strokeStyle = '#0c5b41';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 27, 0, TAU);
+    ctx.fill(); ctx.stroke();
+
+    // belly patch
+    ctx.fillStyle = '#d8fff0';
+    ctx.beginPath(); ctx.ellipse(2, 8, 13, 10, 0, 0, TAU); ctx.fill();
+
+    // backpack / sling (little flair)
+    ctx.fillStyle = '#ff9fc4';
+    ctx.strokeStyle = '#8f2454';
+    ctx.lineWidth = 2.5;
+    roundRect(ctx, -24, -8, 9, 18, 4); ctx.fill(); ctx.stroke();
+
+    // arms
+    ctx.strokeStyle = '#0c5b41'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-16, 6); ctx.lineTo(-26, 16 + Math.sin(this.bob * 2) * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(16, 4); ctx.lineTo(26, -2 + Math.sin(this.bob * 2 + 2) * 2); ctx.stroke();
+
+    // eyes (look toward aim angle)
+    const lookX = Math.cos(aimAngle) * 3.5, lookY = Math.sin(aimAngle) * 3.5;
+    const blinkScale = this.eyeBlink > 0 ? 0.1 : 1;
+    [[-9, -6], [8, -6]].forEach(([ex, ey]) => {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.ellipse(ex, ey, 7, 8 * blinkScale, 0, 0, TAU); ctx.fill();
+      if (blinkScale > 0.5) {
+        ctx.fillStyle = '#1a2b3a';
+        ctx.beginPath(); ctx.arc(ex + lookX, ey + lookY, 3.4, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(ex + lookX - 1.2, ey + lookY - 1.2, 1.1, 0, TAU); ctx.fill();
+      }
+    });
+
+    // cheeks puff while charging
+    const puff = charge;
+    if (puff > 0.02) {
+      ctx.fillStyle = 'rgba(255,160,190,.85)';
+      ctx.beginPath(); ctx.arc(-13, 5, 6 + puff * 7, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(13, 5, 6 + puff * 7, 0, TAU); ctx.fill();
+    }
+
+    // mouth — points toward aim, opens with charge
+    ctx.save();
+    ctx.rotate(clamp(aimAngle, -0.9, 0.9) * 0.5);
+    ctx.fillStyle = '#5a1530';
+    const mouthOpen = 3 + puff * 10;
+    ctx.beginPath();
+    ctx.ellipse(14, 11, 6 + puff * 4, mouthOpen, 0, 0, TAU);
+    ctx.fill();
+    if (puff > 0.3) {
+      ctx.fillStyle = '#8aff7a';
+      ctx.beginPath(); ctx.arc(14, 11, 3 + puff * 3, 0, TAU); ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.restore();
+  }
+}
+
+/* ---------------------------------------------------------------------
+   PROJECTILE (the spit)
+--------------------------------------------------------------------- */
+class Spit {
+  constructor(x, y, angle, speed, damage, size, splash, range, color = '#8aff5a') {
+    this.x = x; this.y = y;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.damage = damage;
+    this.size = size;
+    this.splash = splash;
+    this.color = color;
+    this.traveled = 0;
+    this.range = range;
+    this.dead = false;
+    this.rot = 0;
+    this.trail = [];
+  }
+  update(dt) {
+    this.trail.push({ x: this.x, y: this.y });
+    if (this.trail.length > 6) this.trail.shift();
+    this.vy += 16 * dt; // gentle gravity lob (kept subtle so long-range shots stay accurate)
+    const dx = this.vx * dt, dy = this.vy * dt;
+    this.x += dx; this.y += dy;
+    this.traveled += Math.hypot(dx, dy);
+    this.rot += dt * 14;
+    if (this.traveled > this.range || this.x > VW + 40 || this.y > VH + 40 || this.y < -40) this.dead = true;
+  }
+  draw(ctx) {
+    ctx.save();
+    // trail
+    for (let i = 0; i < this.trail.length; i++) {
+      const t = this.trail[i];
+      const a = (i / this.trail.length) * 0.35;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = this.color;
+      ctx.beginPath(); ctx.arc(t.x, t.y, this.size * (0.4 + i / this.trail.length * 0.5), 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rot);
+    const g = ctx.createRadialGradient(-this.size * 0.3, -this.size * 0.3, 1, 0, 0, this.size);
+    g.addColorStop(0, '#eaffd8');
+    g.addColorStop(0.5, this.color);
+    g.addColorStop(1, '#2f7a1c');
+    ctx.fillStyle = g;
+    ctx.strokeStyle = '#1f5612';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(this.size * 1.1, 0);
+    ctx.quadraticCurveTo(this.size * 0.3, -this.size * 0.9, -this.size, 0);
+    ctx.quadraticCurveTo(this.size * 0.3, this.size * 0.9, this.size * 1.1, 0);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    if (this.splash > 0) {
+      ctx.strokeStyle = 'rgba(138,255,90,.5)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(0, 0, this.size * 1.6, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+/* ---------------------------------------------------------------------
+   ENEMY CONFIG — base stats per monster (before phase scaling)
+--------------------------------------------------------------------- */
+const ENEMY_BASE = {
+  zakaria: { hp: 36, speed: 108, damage: 7,  biteInterval: 1.0, radius: 21, score: 35, coin: 4,  name: 'Zakaria' },
+  yassine: { hp: 128, speed: 40, damage: 13, biteInterval: 1.3, radius: 33, score: 90, coin: 9,  name: 'Yassine' },
+  mouad:   { hp: 9,   speed: 152, damage: 4, biteInterval: 0.65, radius: 13, score: 12, coin: 2, name: 'Mouad' },
+  taha:    { hp: 54,  speed: 82, damage: 9,  biteInterval: 1.0, radius: 23, score: 65, coin: 7,  name: 'Taha' },
+};
+const ENEMY_ORDER = ['zakaria', 'yassine', 'mouad', 'taha'];
+
+/* ---------------------------------------------------------------------
+   ENEMY
+--------------------------------------------------------------------- */
+class Enemy {
+  constructor(type, x, y, hpMult = 1, speedMult = 1, isBoss = false) {
+    const base = ENEMY_BASE[type];
+    this.type = type;
+    this.x = x; this.y = y;
+    this.baseY = y;
+    this.isBoss = isBoss;
+    const bossHpMult = isBoss ? 13 : 1;
+    const bossSpeedMult = isBoss ? 0.72 : 1;
+    const bossDmgMult = isBoss ? 3.2 : 1;
+    const bossRadiusMult = isBoss ? 1.85 : 1;
+    this.maxHp = Math.round(base.hp * hpMult * bossHpMult);
+    this.hp = this.maxHp;
+    this.speed = base.speed * speedMult * bossSpeedMult;
+    this.damage = Math.round(base.damage * bossDmgMult);
+    this.biteInterval = base.biteInterval;
+    this.biteTimer = base.biteInterval * rand(0.4, 1);
+    this.radius = base.radius * bossRadiusMult;
+    this.scoreValue = Math.round(base.score * (isBoss ? 9 : 1));
+    this.coinValue = Math.round(base.coin * (isBoss ? 9 : 1));
+    this.name = base.name;
+    this.state = 'walk';
+    this.animT = rand(0, 10);
+    this.flashTimer = 0;
+    this.chompT = 0;
+    this.dead = false;
+    this.deathTimer = 0;
+    this.spawnGrow = 0; // pop-in animation
+    // zakaria lunge
+    this.lungeTimer = rand(1.2, 2.4);
+    this.lungeBoost = 0;
+    // taha
+    this.invulnTimer = rand(1.5, 3);
+    this.invulnerable = false;
+    this.hopOffset = 0;
+    // mouad zigzag
+    this.zigSeed = rand(0, 10);
+  }
+
+  takeDamage(dmg, game) {
+    if (this.dead) return;
+    if (this.invulnerable) {
+      game.spawnDeflect(this.x, this.y - this.radius * 0.4);
+      Audio_.sfxDeflect();
+      return;
+    }
+    this.hp -= dmg;
+    this.flashTimer = 0.12;
+    if (this.hp <= 0 && this.state !== 'dead') {
+      this.die(game);
+    }
+  }
+
+  die(game) {
+    this.state = 'dead';
+    this.dead = false; // stays for death anim, removed after deathTimer
+    this.deathTimer = 0.4;
+    game.onEnemyKilled(this);
+  }
+
+  update(dt, game) {
+    this.spawnGrow = Math.min(1, this.spawnGrow + dt * 6);
+    if (this.flashTimer > 0) this.flashTimer -= dt;
+    this.animT += dt;
+
+    if (this.state === 'dead') {
+      this.deathTimer -= dt;
+      if (this.deathTimer <= 0) this.dead = true;
+      return;
+    }
+
+    // type-specific special timers
+    if (this.type === 'zakaria') {
+      this.lungeTimer -= dt;
+      if (this.lungeTimer <= 0 && this.state === 'walk') {
+        this.lungeTimer = rand(2.2, 3.4);
+        this.lungeBoost = 0.55;
+      }
+      if (this.lungeBoost > 0) this.lungeBoost = Math.max(0, this.lungeBoost - dt * 0.9);
+    }
+    if (this.type === 'taha') {
+      this.invulnTimer -= dt;
+      if (this.invulnTimer <= 0) {
+        this.invulnerable = !this.invulnerable;
+        this.invulnTimer = this.invulnerable ? 0.55 : rand(2.4, 3.6);
+      }
+      this.hopOffset = Math.abs(Math.sin(this.animT * 6.2)) * 12;
+    }
+
+    if (this.state === 'walk') {
+      let spd = this.speed * game.enemySlowMult;
+      if (this.type === 'zakaria') spd *= (1 + this.lungeBoost * 2.2);
+      if (this.type === 'mouad') {
+        this.y = clamp(this.baseY + Math.sin(this.animT * 5 + this.zigSeed) * 26, GROUND_TOP + 10, GROUND_BOT - 10);
+      }
+      this.x -= spd * dt;
+      if (this.x - this.radius <= ZONE_LINE_X) {
+        this.x = ZONE_LINE_X + this.radius;
+        this.state = 'attack';
+        this.biteTimer = this.biteInterval * 0.5;
+      }
+    } else if (this.state === 'attack') {
+      this.biteTimer -= dt;
+      this.chompT = Math.max(0, this.chompT - dt * 3);
+      if (this.biteTimer <= 0) {
+        this.biteTimer = this.biteInterval;
+        this.chompT = 1;
+        game.damageZone(this.damage, this);
+      }
+    }
+  }
+
+  // ---- drawing helpers ----
+  drawShadow(ctx, scale = 1) {
+    ctx.save();
+    ctx.translate(0, this.radius * 1.15);
+    ctx.scale(1, 0.3);
+    ctx.fillStyle = 'rgba(10,5,25,.35)';
+    ctx.beginPath(); ctx.arc(0, 0, this.radius * scale, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+
+  drawHpBar(ctx) {
+    if (this.hp >= this.maxHp || this.state === 'dead') return;
+    const w = this.radius * 2.2, h = 6;
+    const pct = clamp(this.hp / this.maxHp, 0, 1);
+    ctx.save();
+    ctx.translate(-w / 2, -this.radius - 16);
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    roundRect(ctx, 0, 0, w, h, 3); ctx.fill();
+    ctx.fillStyle = pct > 0.4 ? '#3ad29f' : '#ff4757';
+    roundRect(ctx, 0, 0, w * pct, h, 3); ctx.fill();
+    ctx.restore();
+  }
+
+  draw(ctx) {
+    const wob = Math.sin(this.animT * (this.type === 'yassine' ? 4 : 8)) ;
+    const walking = this.state === 'walk';
+    ctx.save();
+    let drawY = this.y;
+    if (this.type === 'taha') drawY -= this.hopOffset;
+    ctx.translate(this.x, drawY);
+    const grow = this.state === 'dead' ? (1 - (0.4 - this.deathTimer) / 0.4) : (0.4 + 0.6 * this.spawnGrow);
+    const deathSpin = this.state === 'dead' ? (1 - this.deathTimer / 0.4) * 2 : 0;
+    ctx.scale(grow, grow);
+    ctx.rotate(deathSpin);
+    ctx.globalAlpha = this.invulnerable ? 0.45 + Math.sin(this.animT * 20) * 0.15 : 1;
+
+    this.drawShadow(ctx);
+
+    switch (this.type) {
+      case 'zakaria': this.drawZakaria(ctx, wob, walking); break;
+      case 'yassine': this.drawYassine(ctx, wob, walking); break;
+      case 'mouad': this.drawMouad(ctx, wob, walking); break;
+      case 'taha': this.drawTaha(ctx, wob, walking); break;
+    }
+
+    if (this.flashTimer > 0) {
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = `rgba(255,255,255,${this.flashTimer / 0.12 * 0.75})`;
+      ctx.fillRect(-this.radius * 2.4, -this.radius * 2.6, this.radius * 4.8, this.radius * 5.2);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    ctx.restore();
+
+    if (!this.isBoss) { ctx.save(); ctx.translate(this.x, drawY); this.drawHpBar(ctx); ctx.restore(); }
+
+    if (this.isBoss) this.drawBossTag(ctx);
+  }
+
+  drawBossTag(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y - this.radius - 22);
+    ctx.font = '800 13px "Baloo 2","Comic Sans MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd23f';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(40,10,10,.8)';
+    ctx.strokeText('👑 BOSS ' + this.name.toUpperCase(), 0, 0);
+    ctx.fillText('👑 BOSS ' + this.name.toUpperCase(), 0, 0);
+    ctx.restore();
+  }
+
+  // -------------------- ZAKARIA: tall, dark, fast, aggressive --------------------
+  drawZakaria(ctx, wob, walking) {
+    const legSwing = walking ? Math.sin(this.animT * 11) * 10 : 0;
+    const lunge = this.lungeBoost;
+    ctx.save();
+    ctx.scale(1, 1.35); // tall
+
+    // legs
+    ctx.strokeStyle = '#1a1530'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-8, 14); ctx.lineTo(-8 + legSwing, 30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(8, 14); ctx.lineTo(8 - legSwing, 30); ctx.stroke();
+
+    // dark cloak body
+    const g = ctx.createLinearGradient(0, -22, 0, 16);
+    g.addColorStop(0, '#4b3a78');
+    g.addColorStop(1, '#1c1230');
+    ctx.fillStyle = g;
+    ctx.strokeStyle = '#0d0818'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -28);
+    ctx.lineTo(15 + lunge * 6, 14);
+    ctx.lineTo(-15 - lunge * 6, 14);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // spiky collar
+    ctx.fillStyle = '#2a1d44';
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * 7, -10);
+      ctx.lineTo(i * 7 + 3.5, -22 - Math.abs(i));
+      ctx.lineTo(i * 7 + 7, -10);
+      ctx.closePath(); ctx.fill();
+    }
+
+    // head
+    ctx.fillStyle = '#5a4a8c';
+    ctx.strokeStyle = '#0d0818'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, -28, 13, 0, TAU); ctx.fill(); ctx.stroke();
+
+    // angry eyes (glow red, more intense on lunge)
+    ctx.fillStyle = `rgba(255,${60 - lunge * 40},${70 - lunge * 50},1)`;
+    ctx.shadowColor = '#ff3b3b'; ctx.shadowBlur = 8 + lunge * 10;
+    ctx.beginPath(); ctx.moveTo(-8, -30); ctx.lineTo(-1, -28); ctx.lineTo(-8, -25); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(8, -30); ctx.lineTo(1, -28); ctx.lineTo(8, -25); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // snarling mouth
+    ctx.fillStyle = '#0d0818';
+    ctx.beginPath();
+    ctx.moveTo(-7, -20); ctx.lineTo(7, -20); ctx.lineTo(4, -16 - lunge * 4); ctx.lineTo(-4, -16 - lunge * 4);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff';
+    [-5, -1.5, 1.5, 5].forEach(tx => { ctx.beginPath(); ctx.moveTo(tx, -20); ctx.lineTo(tx + 1.4, -17.5); ctx.lineTo(tx - 1.4, -17.5); ctx.closePath(); ctx.fill(); });
+
+    // arms reaching forward when lunging
+    ctx.strokeStyle = '#1a1530'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-13, -6); ctx.lineTo(-22 - lunge * 14, 2 + Math.sin(this.animT * 11) * 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(13, -6); ctx.lineTo(22 + lunge * 14, -2 - Math.sin(this.animT * 11) * 3); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // -------------------- YASSINE: big, funny, slow, tanky --------------------
+  drawYassine(ctx, wob, walking) {
+    const squish = walking ? 1 + Math.sin(this.animT * 4) * 0.06 : 1;
+    ctx.save();
+    ctx.scale(1.5 * squish, 1.5 / squish);
+
+    // big round body
+    const g = ctx.createRadialGradient(-8, -10, 4, 0, 0, 24);
+    g.addColorStop(0, '#ffd27a');
+    g.addColorStop(1, '#e8911f');
+    ctx.fillStyle = g; ctx.strokeStyle = '#7a4a0a'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, 23, 0, TAU); ctx.fill(); ctx.stroke();
+
+    // belly spots
+    ctx.fillStyle = 'rgba(122,74,10,.35)';
+    [[-9, 7, 4], [6, 10, 3], [10, -2, 2.4]].forEach(([sx, sy, r]) => { ctx.beginPath(); ctx.arc(sx, sy, r, 0, TAU); ctx.fill(); });
+
+    // tiny arms
+    ctx.strokeStyle = '#7a4a0a'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    const armWave = Math.sin(this.animT * 4) * 8;
+    ctx.beginPath(); ctx.moveTo(-19, 2); ctx.lineTo(-26, 8 + armWave); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(19, 2); ctx.lineTo(26, 8 - armWave); ctx.stroke();
+
+    // tiny legs
+    ctx.beginPath(); ctx.moveTo(-9, 20); ctx.lineTo(-9 + Math.sin(this.animT * 4) * 4, 27); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(9, 20); ctx.lineTo(9 - Math.sin(this.animT * 4) * 4, 27); ctx.stroke();
+
+    // funny cross-eyed face
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#7a4a0a'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(-8, -6, 7, 8, 0.2, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(8, -6, 7, 8, -0.2, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#241b4e';
+    ctx.beginPath(); ctx.arc(-4.5, -7, 3.2, 0, TAU); ctx.fill(); // cross-eyed: pupils point inward
+    ctx.beginPath(); ctx.arc(4.5, -7, 3.2, 0, TAU); ctx.fill();
+
+    // big grin with tongue
+    ctx.fillStyle = '#7a1530';
+    ctx.beginPath(); ctx.arc(0, 6, 11, 0.1 * Math.PI, 0.9 * Math.PI); ctx.fill();
+    ctx.fillStyle = '#ff8aa8';
+    ctx.beginPath(); ctx.ellipse(0, 10, 5, 6, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#fff';
+    for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.rect(i * 4 - 1.5, 5.5, 3, 3); ctx.fill(); }
+
+    // tiny horns
+    ctx.fillStyle = '#e8911f'; ctx.strokeStyle = '#7a4a0a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-12, -18); ctx.lineTo(-9, -26); ctx.lineTo(-6, -18); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(12, -18); ctx.lineTo(9, -26); ctx.lineTo(6, -18); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    ctx.restore();
+
+    // occasional burp cloud (personality, cheap)
+    if (Math.floor(this.animT * 0.3) % 7 === 0 && Math.sin(this.animT * 30) > 0.985) {
+      // handled via particles externally is overkill; subtle visual only — skip heavy logic here
+    }
+  }
+
+  // -------------------- MOUAD: small, fast, swarmy --------------------
+  drawMouad(ctx, wob, walking) {
+    const legT = this.animT * 22;
+    ctx.save();
+    ctx.scale(0.95, 0.95);
+
+    // little dust puffs implied by squash
+    const squash = walking ? 1 + Math.sin(legT) * 0.1 : 1;
+    ctx.scale(1 / squash, squash);
+
+    // legs (blurry fast flicker)
+    ctx.strokeStyle = '#0c6b2f'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    for (let i = -1; i <= 1; i += 2) {
+      ctx.beginPath(); ctx.moveTo(i * 5, 8); ctx.lineTo(i * 5 + Math.sin(legT + i) * 7, 17); ctx.stroke();
+    }
+
+    // body — small round triangle-ish blob
+    const g = ctx.createRadialGradient(-4, -5, 2, 0, 0, 15);
+    g.addColorStop(0, '#bdff7a');
+    g.addColorStop(1, '#4fb830');
+    ctx.fillStyle = g; ctx.strokeStyle = '#1f6b1a'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(0, 0, 14, 0, TAU); ctx.fill(); ctx.stroke();
+
+    // ears (always alert)
+    ctx.fillStyle = '#4fb830'; ctx.strokeStyle = '#1f6b1a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-9, -10); ctx.lineTo(-13, -20); ctx.lineTo(-4, -13); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(9, -10); ctx.lineTo(13, -20); ctx.lineTo(4, -13); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // beady eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(-5, -3, 4, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(5, -3, 4, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#101810';
+    ctx.beginPath(); ctx.arc(-3.5, -3, 2, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(6.5, -3, 2, 0, TAU); ctx.fill();
+
+    // tiny determined mouth
+    ctx.strokeStyle = '#1f6b1a'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(0, 3, 4, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // -------------------- TAHA: weird mutant, hops, phase-shifts --------------------
+  drawTaha(ctx, wob, walking) {
+    ctx.save();
+    const stretch = 1 + this.hopOffset * 0.01;
+    ctx.scale(1, stretch);
+
+    // tentacle limb
+    ctx.strokeStyle = '#6a2a8c'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(14, 6);
+    ctx.quadraticCurveTo(26, 0 + Math.sin(this.animT * 6) * 8, 30, -8 + Math.cos(this.animT * 5) * 6);
+    ctx.stroke();
+    ctx.fillStyle = '#8c3fc2';
+    ctx.beginPath(); ctx.arc(30, -8 + Math.cos(this.animT * 5) * 6, 4, 0, TAU); ctx.fill();
+
+    // legs (two mismatched)
+    ctx.strokeStyle = '#3a1a5c'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-7, 12); ctx.lineTo(-11, 24 - this.hopOffset * 0.6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6, 13); ctx.lineTo(10, 25 - this.hopOffset * 0.6); ctx.stroke();
+
+    // asymmetric lumpy body, two-tone
+    ctx.fillStyle = '#7b3fc4'; ctx.strokeStyle = '#2e1248'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-16, 8);
+    ctx.quadraticCurveTo(-20, -14, -4, -22);
+    ctx.quadraticCurveTo(14, -26, 18, -8);
+    ctx.quadraticCurveTo(20, 6, 8, 14);
+    ctx.quadraticCurveTo(-6, 18, -16, 8);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // teal patch
+    ctx.fillStyle = '#3fd6c4';
+    ctx.beginPath();
+    ctx.moveTo(2, -20); ctx.quadraticCurveTo(14, -20, 16, -8); ctx.quadraticCurveTo(14, 2, 4, -2);
+    ctx.quadraticCurveTo(-2, -10, 2, -20);
+    ctx.closePath(); ctx.fill();
+
+    // mismatched eyes (3 eyes, weird)
+    const eyeJ = Math.sin(this.animT * 9);
+    [[-6, -8, 5], [6, -12, 4], [1, -2, 3]].forEach(([ex, ey, r], i) => {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(ex, ey, r, 0, TAU); ctx.fill();
+      ctx.fillStyle = i === 1 ? '#ff5a5a' : '#1a1024';
+      ctx.beginPath(); ctx.arc(ex + eyeJ * 1.2, ey, r * 0.5, 0, TAU); ctx.fill();
+    });
+
+    // small jagged mouth
+    ctx.strokeStyle = '#2e1248'; ctx.lineWidth = 2; ctx.fillStyle = '#1a1024';
+    ctx.beginPath();
+    ctx.moveTo(-6, 4); ctx.lineTo(-2, 8); ctx.lineTo(2, 3); ctx.lineTo(6, 8); ctx.lineTo(8, 4);
+    ctx.stroke();
+
+    // phase-shift shimmer ring when invulnerable
+    if (this.invulnerable) {
+      ctx.strokeStyle = `rgba(180,255,255,${0.5 + Math.sin(this.animT * 30) * 0.3})`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(0, -4, 26 + Math.sin(this.animT * 16) * 3, 0, TAU); ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+}
+
+/* ---------------------------------------------------------------------
+   DEFENSE ZONE — the sacred Magical Toes
+--------------------------------------------------------------------- */
+class Zone {
+  constructor(maxHp) {
+    this.x = 1000; this.y = ZONE_Y;
+    this.maxHp = maxHp;
+    this.hp = maxHp;
+    this.shake = 0;
+    this.hitFlash = 0;
+    this.wiggle = 0;
+    this.sparkleT = 0;
+    this.ouchTimer = 0;
+  }
+  setMaxHp(maxHp, healToFull = false) {
+    this.maxHp = maxHp;
+    if (healToFull) this.hp = maxHp; else this.hp = Math.min(this.hp, maxHp);
+  }
+  damage(amount) {
+    this.hp = clamp(this.hp - amount, 0, this.maxHp);
+    this.shake = 1;
+    this.hitFlash = 0.35;
+    this.ouchTimer = 0.6;
+  }
+  update(dt) {
+    this.wiggle += dt;
+    this.sparkleT += dt;
+    if (this.shake > 0) this.shake = Math.max(0, this.shake - dt * 3.2);
+    if (this.hitFlash > 0) this.hitFlash -= dt;
+    if (this.ouchTimer > 0) this.ouchTimer -= dt;
+  }
+  draw(ctx) {
+    const sx = this.x + (Math.random() - 0.5) * this.shake * 10;
+    const sy = this.y + (Math.random() - 0.5) * this.shake * 10;
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    // magic aura
+    const pulse = 0.85 + Math.sin(this.sparkleT * 2) * 0.15;
+    const auraG = ctx.createRadialGradient(0, 10, 10, 0, 10, 110 * pulse);
+    auraG.addColorStop(0, 'rgba(255,150,210,.35)');
+    auraG.addColorStop(1, 'rgba(255,150,210,0)');
+    ctx.fillStyle = auraG;
+    ctx.beginPath(); ctx.arc(0, 10, 110 * pulse, 0, TAU); ctx.fill();
+
+    // pedestal
+    ctx.fillStyle = '#caa6ff';
+    ctx.strokeStyle = '#6c3fc2';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(0, 78, 100, 26, 0, 0, TAU);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#9a6cf0';
+    roundRect(ctx, -78, 36, 156, 50, 18);
+    ctx.fill(); ctx.stroke();
+
+    // cushion
+    ctx.fillStyle = '#ffe27a';
+    roundRect(ctx, -66, 22, 132, 28, 14);
+    ctx.fill(); ctx.strokeStyle = '#c89a1f'; ctx.lineWidth = 3;
+    roundRect(ctx, -66, 22, 132, 28, 14); ctx.stroke();
+
+    // ---- the two beautiful (and now anatomically realistic) magical toes ----
+    const wig = Math.sin(this.wiggle * 2.4) * 6;
+    const hpPct = this.maxHp > 0 ? this.hp / this.maxHp : 1;
+    [-1, 1].forEach((side, idx) => {
+      ctx.save();
+      ctx.translate(side * 32, 12);
+      const jitter = this.ouchTimer > 0 ? Math.sin(this.ouchTimer * 70) * (this.ouchTimer / 0.6) * 2.5 : 0;
+      ctx.translate(jitter, 0);
+      ctx.rotate(side * 0.1 + Math.sin(this.wiggle * 2.2 + idx) * 0.045);
+
+      // soft contact shadow under the toe
+      ctx.save();
+      ctx.translate(0, 30);
+      ctx.scale(1, 0.3);
+      ctx.fillStyle = 'rgba(90,50,30,.25)';
+      ctx.beginPath(); ctx.arc(0, 0, 20, 0, TAU); ctx.fill();
+      ctx.restore();
+
+      // magical glow (kept subtle so the shape reads as real, not candy)
+      ctx.shadowColor = this.hitFlash > 0 ? '#ff5a4a' : '#ffe9b0';
+      ctx.shadowBlur = this.hitFlash > 0 ? 16 * (this.hitFlash / 0.35) : 7;
+
+      // ---- realistic toe silhouette (organic bezier form, not a pill shape) ----
+      ctx.beginPath();
+      ctx.moveTo(-16, 22);
+      ctx.bezierCurveTo(-20, 2, -17, -22, -9, -34);
+      ctx.bezierCurveTo(-6, -39, -2, -42, 0, -42);
+      ctx.bezierCurveTo(2, -42, 6, -39, 9, -34);
+      ctx.bezierCurveTo(17, -22, 20, 2, 16, 22);
+      ctx.bezierCurveTo(10, 27, -10, 27, -16, 22);
+      ctx.closePath();
+
+      const skinGrad = ctx.createLinearGradient(-16, -38, 14, 24);
+      skinGrad.addColorStop(0, '#ffdcb8');
+      skinGrad.addColorStop(0.42, '#f0b489');
+      skinGrad.addColorStop(0.75, '#d99c6c');
+      skinGrad.addColorStop(1, '#bf8056');
+      ctx.fillStyle = skinGrad;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // gentle outline (low-contrast, natural — not a cartoon ink line)
+      ctx.strokeStyle = 'rgba(140,85,50,.55)';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      // subtle rounded-form shading: a soft highlight top-left, shadow along the right edge
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-atop';
+      const highlight = ctx.createRadialGradient(-7, -28, 1, -7, -28, 26);
+      highlight.addColorStop(0, 'rgba(255,255,255,.40)');
+      highlight.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = highlight;
+      ctx.fillRect(-22, -44, 44, 72);
+      const shade = ctx.createLinearGradient(6, -10, 20, 22);
+      shade.addColorStop(0, 'rgba(90,50,25,0)');
+      shade.addColorStop(1, 'rgba(90,50,25,.30)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(-22, -44, 44, 72);
+      ctx.restore();
+
+      // redness tint when freshly hit (drawn last so it reads clearly on top)
+      if (this.hitFlash > 0) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = `rgba(230,60,50,${(this.hitFlash / 0.35) * 0.5})`;
+        ctx.fillRect(-22, -44, 44, 72);
+        ctx.restore();
+      }
+
+      // knuckle / joint crease where the toe meets the foot
+      ctx.strokeStyle = 'rgba(120,70,40,.4)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-13, 15);
+      ctx.quadraticCurveTo(0, 20, 13, 15);
+      ctx.stroke();
+      // a couple of fine skin-texture lines for realism
+      ctx.strokeStyle = 'rgba(120,70,40,.22)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-10, 6); ctx.quadraticCurveTo(0, 9, 10, 6); ctx.stroke();
+
+      // ---- realistic toenail: shaped plate + lunula + cuticle line ----
+      ctx.save();
+      ctx.translate(0, -27);
+      ctx.beginPath();
+      ctx.moveTo(-9, 9);
+      ctx.bezierCurveTo(-10, 0, -9, -8, -5, -12);
+      ctx.bezierCurveTo(-2, -15, 2, -15, 5, -12);
+      ctx.bezierCurveTo(9, -8, 10, 0, 9, 9);
+      ctx.bezierCurveTo(5, 12, -5, 12, -9, 9);
+      ctx.closePath();
+      const nailGrad = ctx.createLinearGradient(-8, -13, 7, 10);
+      nailGrad.addColorStop(0, '#ffe9e2');
+      nailGrad.addColorStop(0.5, '#f3cdbf');
+      nailGrad.addColorStop(1, '#e3ada0');
+      ctx.fillStyle = nailGrad;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(150,95,80,.45)';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+      // lunula (the little pale half-moon at the nail base)
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.beginPath(); ctx.ellipse(0, 8, 5.5, 2.6, 0, 0, Math.PI, true); ctx.fill();
+      // cuticle line
+      ctx.strokeStyle = 'rgba(150,95,80,.3)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-8, 9); ctx.quadraticCurveTo(0, 12, 8, 9); ctx.stroke();
+      // soft shine — and a faint magical sparkle so it still reads as enchanted
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      ctx.beginPath(); ctx.ellipse(-3, -4, 2, 4.5, -0.3, 0, TAU); ctx.fill();
+      if (Math.sin(this.sparkleT * 3 + idx * 2) > 0.92) {
+        ctx.fillStyle = 'rgba(255,245,210,.9)';
+        drawStar(ctx, 4, -2, 3.2, 1.3, 4);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // impact streaks — brief motion lines instead of a crying cartoon face
+      if (this.ouchTimer > 0.35) {
+        const t = (this.ouchTimer - 0.35) / 0.25;
+        ctx.save();
+        ctx.globalAlpha = t;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        [[-20, -10, -30, -16], [20, -8, 30, -14], [-18, 6, -28, 10], [18, 10, 28, 14]].forEach(([x1, y1, x2, y2]) => {
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      // a little band-aid once the toes have taken a real beating (funny, but no face needed)
+      if (hpPct < 0.4) {
+        ctx.save();
+        ctx.translate(side * -2, -6);
+        ctx.rotate(0.5);
+        ctx.fillStyle = '#f2c89a';
+        roundRect(ctx, -10, -4, 20, 8, 3);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(150,100,60,.4)'; ctx.lineWidth = 1;
+        roundRect(ctx, -10, -4, 20, 8, 3); ctx.stroke();
+        ctx.fillStyle = '#d9b27c';
+        ctx.beginPath(); ctx.arc(-5.5, 0, 1, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(5.5, 0, 1, 0, TAU); ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.restore();
+    });
+
+    // sparkles orbiting
+    for (let i = 0; i < 5; i++) {
+      const a = this.sparkleT * 1.4 + i * (TAU / 5);
+      const r = 95 + Math.sin(this.sparkleT * 2 + i) * 8;
+      const px = Math.cos(a) * r, py = Math.sin(a) * r * 0.55 - 10;
+      const sAlpha = 0.4 + Math.sin(this.sparkleT * 3 + i) * 0.4;
+      ctx.save();
+      ctx.globalAlpha = clamp(sAlpha, 0, 1);
+      ctx.fillStyle = '#fff3c2';
+      drawStar(ctx, px, py, 5, 2, 4);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+}
+
+/* ---------------------------------------------------------------------
+   BACKGROUND DECORATIONS
+--------------------------------------------------------------------- */
+function drawBackground(ctx, t) {
+  // sky
+  const sky = ctx.createLinearGradient(0, 0, 0, VH);
+  sky.addColorStop(0, '#7fe9ff');
+  sky.addColorStop(0.55, '#bdf3ff');
+  sky.addColorStop(1, '#e9fff5');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, VW, VH);
+
+  // sun
+  ctx.save();
+  ctx.translate(1120, 100);
+  ctx.fillStyle = 'rgba(255,230,140,.9)';
+  ctx.beginPath(); ctx.arc(0, 0, 50, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#fff3c2';
+  ctx.beginPath(); ctx.arc(0, 0, 36, 0, TAU); ctx.fill();
+  ctx.restore();
+
+  // clouds (slow parallax)
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  const cloudPositions = [[160, 90, 1], [430, 140, 0.7], [760, 75, 0.9], [980, 170, 0.6], [60, 200, 0.55]];
+  cloudPositions.forEach(([cx, cy, s], i) => {
+    const x = ((cx + t * (8 + i * 2)) % (VW + 200)) - 100;
+    ctx.save();
+    ctx.translate(x, cy);
+    ctx.scale(s, s);
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, 0, TAU);
+    ctx.arc(24, -8, 18, 0, TAU);
+    ctx.arc(-24, -4, 16, 0, TAU);
+    ctx.arc(10, 8, 20, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // distant hills
+  ctx.fillStyle = '#aef0c8';
+  ctx.beginPath();
+  ctx.moveTo(0, 520);
+  for (let x = 0; x <= VW; x += 80) ctx.lineTo(x, 500 + Math.sin(x * 0.01 + 1) * 22);
+  ctx.lineTo(VW, VH); ctx.lineTo(0, VH); ctx.closePath(); ctx.fill();
+
+  // ground
+  const ground = ctx.createLinearGradient(0, 580, 0, VH);
+  ground.addColorStop(0, '#7fd99a');
+  ground.addColorStop(1, '#4fae72');
+  ctx.fillStyle = ground;
+  ctx.fillRect(0, 600, VW, VH - 600);
+  ctx.strokeStyle = 'rgba(255,255,255,.3)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let x = -((t * 60) % 60); x < VW; x += 60) { ctx.moveTo(x, 600); ctx.lineTo(x - 20, VH); }
+  ctx.stroke();
+
+  // danger line marking the zone boundary (subtle magic fence)
+  ctx.save();
+  ctx.strokeStyle = `rgba(255,140,200,${0.35 + Math.sin(t * 3) * 0.1})`;
+  ctx.lineWidth = 4;
+  ctx.setLineDash([14, 10]);
+  ctx.lineDashOffset = -t * 30;
+  ctx.beginPath(); ctx.moveTo(ZONE_LINE_X - 18, GROUND_TOP - 20); ctx.lineTo(ZONE_LINE_X - 18, GROUND_BOT + 30);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // decorative rocks (flavor only — Taha hops over these visually)
+  [[640, 560], [780, 200]].forEach(([rx, ry]) => {
+    ctx.save();
+    ctx.translate(rx, ry);
+    ctx.fillStyle = '#8a9a8f';
+    ctx.strokeStyle = '#5a6a5f';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 22, 14, 0, 0, TAU);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.25)';
+    ctx.beginPath(); ctx.ellipse(-6, -4, 8, 4, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+  });
+}
+
+/* ---------------------------------------------------------------------
+   UPGRADES
+--------------------------------------------------------------------- */
+const UPGRADE_DEFS = {
+  damage:   { name: 'More Damage',    icon: '💥', desc: '+4 damage per spit blob',           baseCost: 20, growth: 1.55, maxLevel: 6 },
+  fireRate: { name: 'Faster Shooting',icon: '⚡', desc: 'Shorter cooldown between spits',     baseCost: 24, growth: 1.55, maxLevel: 6 },
+  splash:   { name: 'Bigger Spit',    icon: '💦', desc: 'Adds splash damage to nearby foes',  baseCost: 30, growth: 1.6,  maxLevel: 5 },
+  range:    { name: 'Turbo Spit',     icon: '🚀', desc: 'Spit flies faster & farther',        baseCost: 18, growth: 1.5,  maxLevel: 6 },
+  defense:  { name: 'Toe Shield',     icon: '🛡️', desc: '+22 max toe health (heals too)',     baseCost: 24, growth: 1.5,  maxLevel: 6 },
+  slow:     { name: 'Sticky Slime',   icon: '🐌', desc: 'Permanently slows all enemies',      baseCost: 45, growth: 2.0,  maxLevel: 3 },
+};
+function costForLevel(key, level) {
+  const d = UPGRADE_DEFS[key];
+  return Math.round(d.baseCost * Math.pow(d.growth, level));
+}
+
+/* ---------------------------------------------------------------------
+   WAVE / PHASE BUILDER
+--------------------------------------------------------------------- */
+const PHASE_DEFS = [
+  { queue: ['zakaria', 'zakaria', 'mouad', 'zakaria'], interval: 2.0, hpMult: 1.0, speedMult: 1.0 },
+  { queue: ['zakaria', 'mouad', 'zakaria', 'yassine', 'zakaria', 'mouad', 'yassine', 'zakaria'], interval: 1.45, hpMult: 1.05, speedMult: 1.04 },
+  { queue: ['zakaria', 'taha', 'mouad', 'yassine', 'taha', 'zakaria', 'mouad', 'yassine', 'taha', 'zakaria'], interval: 1.2, hpMult: 1.12, speedMult: 1.08 },
+  { queue: ['zakaria', 'yassine', 'taha', 'mouad', 'zakaria', 'taha', 'yassine', 'mouad', 'taha', 'zakaria', 'yassine', 'mouad'], interval: 1.0, hpMult: 1.22, speedMult: 1.12 },
+];
+
+function buildPhase(n) {
+  if (n >= 1 && n <= 4) return Object.assign({ isBoss: false, bossType: null }, PHASE_DEFS[n - 1]);
+  const isBoss = n % 5 === 0;
+  const hpMult = 1 + (n - 1) * 0.09;
+  const speedMult = Math.min(1.95, 1 + (n - 1) * 0.032);
+  const interval = Math.max(0.38, 1.25 - n * 0.02);
+  if (isBoss) {
+    const bossCycle = Math.floor(n / 5) - 1;
+    const bossType = ENEMY_ORDER[((bossCycle % 4) + 4) % 4];
+    const minionCount = Math.min(18, 5 + bossCycle * 2);
+    const pool = ['zakaria', 'mouad', 'yassine', 'taha'];
+    const queue = ['BOSS:' + bossType];
+    for (let i = 0; i < minionCount; i++) queue.push(choice(pool));
+    return { queue, interval: interval * 1.15, hpMult, speedMult, isBoss: true, bossType };
+  }
+  const totalEnemies = Math.min(50, Math.round(11 + n * 1.65));
+  const pool = ['zakaria', 'zakaria', 'mouad', 'yassine', 'taha'];
+  const queue = [];
+  for (let i = 0; i < totalEnemies; i++) queue.push(choice(pool));
+  return { queue, interval, hpMult, speedMult, isBoss: false, bossType: null };
+}
+
+/* ---------------------------------------------------------------------
+   MAIN GAME CLASS
+--------------------------------------------------------------------- */
+class Game {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.state = 'MENU';
+    this.inputPaused = false;
+
+    this.player = new Player();
+    this.upgrades = { damage: 0, fireRate: 0, splash: 0, range: 0, defense: 0, slow: 0 };
+    this.recomputeStats();
+    this.zone = new Zone(this.maxZoneHp);
+
+    this.enemies = [];
+    this.projectiles = [];
+    this.particles = [];
+    this.texts = [];
+
+    this.phase = 1;
+    this.score = 0;
+    this.coins = 0;
+    this.highScore = Number(localStorage.getItem(LS_HIGHSCORE) || 0);
+
+    this.spawnQueue = [];
+    this.spawnTimer = 1;
+    this.spawnInterval = 2;
+    this.waveActive = false;
+    this.curHpMult = 1; this.curSpeedMult = 1; this.curIsBoss = false; this.curBossType = null;
+
+    this.cooldownTimer = 0;
+    this.charging = false;
+    this.chargeStart = 0;
+    this.currentAimAngle = 0;
+
+    this.shakeTime = 0; this.shakeMag = 0;
+    this.flashColor = null; this.flashTime = 0;
+
+    this.bgTime = 0;
+  }
+
+  recomputeStats() {
+    const u = this.upgrades;
+    this.spitDamage = 9 + u.damage * 4;
+    this.fireCooldown = Math.max(0.15, 0.46 - u.fireRate * 0.045);
+    this.spitSplash = u.splash * 15;
+    this.spitSpeed = 600 + u.range * 50;
+    this.spitRange = 1100 + u.range * 100;
+    this.maxZoneHp = 130 + u.defense * 20;
+    this.enemySlowMult = 1 - u.slow * 0.12;
+  }
+
+  buyUpgrade(key) {
+    const lvl = this.upgrades[key];
+    const def = UPGRADE_DEFS[key];
+    if (lvl >= def.maxLevel) return false;
+    const cost = costForLevel(key, lvl);
+    if (this.coins < cost) return false;
+    this.coins -= cost;
+    this.upgrades[key]++;
+    this.recomputeStats();
+    if (key === 'defense') this.zone.setMaxHp(this.maxZoneHp, false), this.zone.hp = Math.min(this.zone.maxHp, this.zone.hp + 22);
+    Audio_.sfxUpgrade();
+    return true;
+  }
+
+  startNewGame() {
+    this.player = new Player();
+    this.enemies = []; this.projectiles = []; this.particles = []; this.texts = [];
+    this.phase = 1; this.score = 0; this.coins = 0;
+    this.upgrades = { damage: 0, fireRate: 0, splash: 0, range: 0, defense: 0, slow: 0 };
+    this.recomputeStats();
+    this.zone = new Zone(this.maxZoneHp);
+    this.cooldownTimer = 0;
+    this.charging = false;
+    this.shakeTime = 0;
+    this.startPhase(this.phase);
+    this.state = 'PLAYING';
+  }
+
+  startPhase(n) {
+    const def = buildPhase(n);
+    this.spawnQueue = def.queue.slice();
+    this.spawnInterval = def.interval;
+    this.curHpMult = def.hpMult;
+    this.curSpeedMult = def.speedMult;
+    this.curIsBoss = def.isBoss;
+    this.curBossType = def.bossType;
+    this.spawnTimer = def.isBoss ? 1.4 : 0.7;
+    this.waveActive = true;
+    Audio_.sfxWaveStart();
+    if (def.isBoss) {
+      setTimeout(() => Audio_.sfxBoss(), 350);
+      this.texts.push(new FloatingText(VW / 2, 220, '⚠ BOSS WAVE ⚠', '#ff6b81', 34, -10, 2.2));
+    } else {
+      this.texts.push(new FloatingText(VW / 2, 220, 'WAVE ' + n, '#9be8ff', 30, -10, 1.6));
+    }
+  }
+
+  nextWave() {
+    this.phase++;
+    this.startPhase(this.phase);
+    this.state = 'PLAYING';
+  }
+
+  // ---------------- spawning ----------------
+  spawnEnemyAt(type, x, y, isBoss) {
+    const e = new Enemy(type, x, y, this.curHpMult, this.curSpeedMult, isBoss);
+    this.enemies.push(e);
+    return e;
+  }
+
+  spawnNextFromQueue() {
+    const token = this.spawnQueue.shift();
+    if (!token) return;
+    if (token.startsWith('BOSS:')) {
+      const type = token.split(':')[1];
+      this.spawnEnemyAt(type, VW + 70, ZONE_Y, true);
+      return;
+    }
+    if (token === 'mouad') {
+      const baseY = clamp(rand(GROUND_TOP + 30, GROUND_BOT - 30), GROUND_TOP, GROUND_BOT);
+      for (let i = 0; i < 3; i++) {
+        this.spawnEnemyAt('mouad', VW + 50 + i * 26, clamp(baseY + (i - 1) * 34, GROUND_TOP + 5, GROUND_BOT - 5), false);
+      }
+      return;
+    }
+    const y = rand(GROUND_TOP + 20, GROUND_BOT - 20);
+    this.spawnEnemyAt(token, VW + 50, y, false);
+  }
+
+  // ---------------- combat ----------------
+  beginCharge() {
+    if (this.state !== 'PLAYING' || this.inputPaused) return;
+    if (this.cooldownTimer > 0 || this.charging) return;
+    this.charging = true;
+    this.chargeStart = performance.now();
+    Audio_.ensure(); Audio_.resume();
+    Audio_.sfxCharge();
+  }
+  releaseSpit() {
+    if (!this.charging) return;
+    this.charging = false;
+    if (this.state !== 'PLAYING' || this.cooldownTimer > 0) return;
+    const heldMs = performance.now() - this.chargeStart;
+    const frac = clamp(heldMs / 550, 0, 1);
+    const power = 0.55 + 0.45 * frac;
+    this.fireSpit(power);
+    this.cooldownTimer = this.fireCooldown;
+  }
+  fireSpit(power) {
+    const angle = this.computeFireAngle();
+    const dmg = this.spitDamage * (0.75 + 0.45 * power);
+    const speed = this.spitSpeed * (0.85 + 0.3 * power);
+    const size = 6.5 + power * 6.5;
+    const sp = new Spit(this.player.x + 22, this.player.y - 6, angle, speed, dmg, size, this.spitSplash, this.spitRange);
+    this.projectiles.push(sp);
+    this.player.squish = 1;
+    Audio_.sfxSpit();
+  }
+
+  // Soft aim-assist: if an enemy sits within a forgiving cone of where the
+  // player is pointing, bias the shot to lead that enemy's predicted position.
+  // Keeps the "point roughly at the monster" arcade feel instead of demanding
+  // pixel-perfect manual leading against a moving target.
+  computeFireAngle() {
+    const baseAngle = this.currentAimAngle;
+    const px = this.player.x, py = this.player.y;
+    let best = null, bestDiff = Infinity;
+    for (const e of this.enemies) {
+      if (e.state === 'dead') continue;
+      const angTo = Math.atan2(e.y - py, e.x - px);
+      let diff = Math.abs(angTo - baseAngle);
+      if (diff > Math.PI) diff = Math.abs(diff - TAU);
+      if (diff < 0.27 && diff < bestDiff) { bestDiff = diff; best = e; }
+    }
+    if (!best) return baseAngle;
+    let predX = best.x, predY = best.y;
+    if (best.state === 'walk') {
+      const spd = best.speed * this.enemySlowMult;
+      let t = dist(px, py, predX, predY) / this.spitSpeed;
+      predX = best.x - spd * t;
+      t = dist(px, py, predX, predY) / this.spitSpeed; // one refinement pass
+      predX = best.x - spd * t;
+    }
+    return clamp(Math.atan2(predY - py, predX - px), -1.05, 1.05);
+  }
+
+  computeAimAngle() {
+    let angle = this.currentAimAngle || 0;
+    if (Input.fireId !== null) {
+      const dx = Input.fireCur.x - Input.fireOrigin.x, dy = Input.fireCur.y - Input.fireOrigin.y;
+      if (Math.hypot(dx, dy) > 8) angle = Math.atan2(dy, dx);
+    } else if (Input.pointer.active) {
+      angle = Math.atan2(Input.pointer.y - this.player.y, Input.pointer.x - this.player.x);
+    }
+    return clamp(angle, -1.05, 1.05);
+  }
+
+  onEnemyKilled(enemy) {
+    this.score += enemy.scoreValue;
+    this.coins += enemy.coinValue;
+    const colors = { zakaria: '#6a52b8', yassine: '#e8911f', mouad: '#4fb830', taha: '#8c3fc2' };
+    this.spawnBurst(enemy.x, enemy.y, colors[enemy.type] || '#fff', enemy.isBoss ? 38 : 14, enemy.isBoss ? 1.7 : 1);
+    this.texts.push(new FloatingText(enemy.x, enemy.y - enemy.radius - 6, '+' + enemy.scoreValue, '#ffe27a', enemy.isBoss ? 24 : 16));
+    const pitchMap = { zakaria: 1.15, yassine: 0.7, mouad: 1.6, taha: 1.0 };
+    Audio_.sfxDeath(pitchMap[enemy.type] || 1);
+    Audio_.sfxCoin();
+    if (enemy.isBoss) {
+      this.texts.push(new FloatingText(VW / 2, 260, 'BOSS DEFEATED!', '#ffd23f', 30, -15, 1.8));
+      this.shakeTime = 0.5; this.shakeMag = 16;
+    }
+  }
+
+  spawnBurst(x, y, color, count, scale = 1) {
+    for (let i = 0; i < count; i++) {
+      const a = rand(0, TAU), spd = rand(40, 220) * scale;
+      this.particles.push(new Particle(x, y, Math.cos(a) * spd, Math.sin(a) * spd - 60, color, rand(0.4, 0.9), rand(3, 7) * scale));
+    }
+  }
+  spawnHitFx(x, y, color) {
+    for (let i = 0; i < 7; i++) {
+      const a = rand(0, TAU), spd = rand(40, 160);
+      this.particles.push(new Particle(x, y, Math.cos(a) * spd, Math.sin(a) * spd - 30, color, rand(0.25, 0.5), rand(2, 5)));
+    }
+  }
+  spawnDeflect(x, y) {
+    for (let i = 0; i < 8; i++) {
+      const a = rand(0, TAU);
+      this.particles.push(new Particle(x, y, Math.cos(a) * 140, Math.sin(a) * 140, '#bfffff', 0.3, 3, 0, 'star'));
+    }
+    this.texts.push(new FloatingText(x, y - 10, 'PHASED!', '#bfffff', 13, -30, 0.5));
+  }
+
+  damageZone(amount, enemy) {
+    this.zone.damage(amount);
+    this.shakeTime = 0.3; this.shakeMag = Math.max(this.shakeMag, 9);
+    Audio_.sfxZoneHit();
+    for (let i = 0; i < 6; i++) {
+      const a = rand(0, TAU);
+      this.particles.push(new Particle(this.zone.x + rand(-30, 30), this.zone.y, Math.cos(a) * 90, Math.sin(a) * 90 - 80, '#ff9fc4', 0.5, 4));
+    }
+    this.texts.push(new FloatingText(this.zone.x + rand(-30, 30), this.zone.y - 30, '-' + amount, '#ff5a6e', 16, -40, 0.6));
+    if (this.zone.hp <= 0) this.endGame();
+  }
+
+  endGame() {
+    if (this.state === 'GAMEOVER') return;
+    this.state = 'GAMEOVER';
+    Audio_.sfxGameOver();
+    this.newHigh = false;
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      localStorage.setItem(LS_HIGHSCORE, String(this.highScore));
+      this.newHigh = true;
+    }
+    UI.showGameOver(this);
+  }
+
+  // ---------------- update ----------------
+  update(dt) {
+    this.bgTime += dt;
+    this.zone.update(dt);
+    for (let i = this.particles.length - 1; i >= 0; i--) if (!this.particles[i].update(dt)) this.particles.splice(i, 1);
+    for (let i = this.texts.length - 1; i >= 0; i--) if (!this.texts[i].update(dt)) this.texts.splice(i, 1);
+    if (this.shakeTime > 0) this.shakeTime = Math.max(0, this.shakeTime - dt);
+
+    if (this.state !== 'PLAYING' || this.inputPaused) return;
+
+    // input
+    const moveVec = Input.getMoveVector();
+    this.player.update(dt, moveVec);
+    this.currentAimAngle = this.computeAimAngle();
+    if (this.cooldownTimer > 0) this.cooldownTimer -= dt;
+
+    // spawning
+    if (this.waveActive) {
+      this.spawnTimer -= dt;
+      if (this.spawnTimer <= 0 && this.spawnQueue.length > 0) {
+        this.spawnNextFromQueue();
+        this.spawnTimer = this.spawnInterval * rand(0.82, 1.18);
+      }
+      if (this.spawnQueue.length === 0 && this.enemies.length === 0) {
+        this.waveActive = false;
+        this.state = 'SHOP';
+        UI.showShop(this);
+      }
+    }
+
+    // enemies
+    for (let i = this.enemies.length - 1; i >= 0; i--) {
+      const e = this.enemies[i];
+      e.update(dt, this);
+      if (e.dead) this.enemies.splice(i, 1);
+    }
+
+    // projectiles
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const p = this.projectiles[i];
+      p.update(dt);
+      if (p.dead) { this.projectiles.splice(i, 1); continue; }
+      for (let j = 0; j < this.enemies.length; j++) {
+        const e = this.enemies[j];
+        if (e.state === 'dead') continue;
+        if (dist(p.x, p.y, e.x, e.y) <= p.size + e.radius) {
+          const wasInvuln = e.invulnerable;
+          e.takeDamage(p.damage, this);
+          if (!wasInvuln) {
+            this.spawnHitFx(p.x, p.y, p.color);
+            Audio_.sfxHit();
+            if (p.splash > 0) {
+              for (let k = 0; k < this.enemies.length; k++) {
+                if (k === j) continue;
+                const e2 = this.enemies[k];
+                if (e2.state === 'dead') continue;
+                if (dist(e.x, e.y, e2.x, e2.y) <= p.splash) e2.takeDamage(p.damage * 0.55, this);
+              }
+              this.spawnHitFx(p.x, p.y, '#cfffb0');
+            }
+          }
+          p.dead = true;
+          break;
+        }
+      }
+      if (p.dead) this.projectiles.splice(i, 1);
+    }
+  }
+
+  // ---------------- render ----------------
+  render() {
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, VW, VH);
+    ctx.save();
+    if (this.shakeTime > 0) {
+      const mag = this.shakeMag * (this.shakeTime / 0.3);
+      ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+    }
+
+    drawBackground(ctx, this.bgTime);
+    this.zone.draw(ctx);
+
+    // depth-sort enemies + player by y
+    const drawables = this.enemies.slice();
+    drawables.sort((a, b) => a.y - b.y);
+    for (const e of drawables) e.draw(ctx);
+
+    if (this.state === 'PLAYING' || this.state === 'SHOP') {
+      const chargeFrac = this.charging ? clamp((performance.now() - this.chargeStart) / 550, 0, 1) : 0;
+      this.player.draw(ctx, this.currentAimAngle, chargeFrac);
+    }
+
+    for (const p of this.projectiles) p.draw(ctx);
+    for (const pt of this.particles) pt.draw(ctx);
+    for (const t of this.texts) t.draw(ctx);
+
+    ctx.restore();
+  }
+}
+
+/* ---------------------------------------------------------------------
+   UI — DOM glue (HUD, menus, shop, game over)
+--------------------------------------------------------------------- */
+const MONSTER_BLURB = {
+  zakaria: 'Tall, dark & fast. Loves to lunge.',
+  yassine: 'Huge & silly. Soaks up spit!',
+  mouad: 'Tiny & speedy. Travels in packs.',
+  taha: 'Weird mutant. Phases thru hits!',
+};
+
+const UI = {
+  els: {},
+  cacheEls() {
+    const ids = ['waveChip', 'scoreChip', 'coinChip', 'muteBtn', 'zoneHpBarInner',
+      'chargeWrap', 'chargeInner', 'menuOverlay', 'menuMonsterRow', 'startBtn', 'menuHighScore',
+      'shopOverlay', 'shopTitle', 'shopCoinAmt', 'shopGrid', 'nextWaveBtn',
+      'gameOverOverlay', 'newHighBadge', 'finalScore', 'finalWave', 'finalHigh', 'restartBtn',
+      'rotateWarn', 'touchLayer', 'joyBase', 'joyStick', 'fireBtn'];
+    ids.forEach(id => this.els[id] = document.getElementById(id));
+  },
+
+  buildMonsterPreview(type) {
+    const wrap = document.createElement('div');
+    wrap.className = 'monsterChip';
+    const cv = document.createElement('canvas');
+    cv.width = 72; cv.height = 72;
+    wrap.appendChild(cv);
+    const label = document.createElement('div');
+    label.style.color = '#fff';
+    label.textContent = ENEMY_BASE[type].name;
+    wrap.appendChild(label);
+    const blurb = document.createElement('div');
+    blurb.style.fontWeight = '400'; blurb.style.fontSize = '10px'; blurb.style.color = '#cfc4ff'; blurb.style.marginTop = '2px';
+    blurb.textContent = MONSTER_BLURB[type];
+    wrap.appendChild(blurb);
+
+    const ctx = cv.getContext('2d');
+    const e = new Enemy(type, 0, 0, 1, 1, false);
+    e.spawnGrow = 1;
+    ctx.save();
+    ctx.translate(36, 48);
+    if (type === 'zakaria') e.drawZakaria(ctx, 0, false);
+    else if (type === 'yassine') e.drawYassine(ctx, 0, false);
+    else if (type === 'mouad') e.drawMouad(ctx, 0, false);
+    else if (type === 'taha') e.drawTaha(ctx, 0, false);
+    ctx.restore();
+    return wrap;
+  },
+
+  initMenu() {
+    this.els.menuMonsterRow.innerHTML = '';
+    ENEMY_ORDER.forEach(t => this.els.menuMonsterRow.appendChild(this.buildMonsterPreview(t)));
+    this.els.menuHighScore.textContent = Number(localStorage.getItem(LS_HIGHSCORE) || 0);
+  },
+
+  updateHud(game) {
+    this.els.waveChip.textContent = '🌊 Wave ' + game.phase;
+    this.els.scoreChip.textContent = '⭐ ' + game.score;
+    this.els.coinChip.textContent = '🪙 ' + game.coins;
+    const pct = clamp(game.zone.hp / game.zone.maxHp, 0, 1) * 100;
+    this.els.zoneHpBarInner.style.width = pct + '%';
+
+    if (game.charging) {
+      const frac = clamp((performance.now() - game.chargeStart) / 550, 0, 1);
+      this.els.chargeWrap.classList.add('show');
+      this.els.chargeInner.style.width = (frac * 100) + '%';
+    } else {
+      this.els.chargeWrap.classList.remove('show');
+    }
+  },
+
+  showShop(game) {
+    this.els.shopTitle.textContent = game.curIsBoss ? 'Boss Defeated! 🏆' : `Wave ${game.phase} Cleared! 🎉`;
+    this.renderShop(game);
+    this.els.shopOverlay.classList.remove('hidden');
+  },
+  hideShop() { this.els.shopOverlay.classList.add('hidden'); },
+
+  renderShop(game) {
+    this.els.shopCoinAmt.textContent = game.coins;
+    const grid = this.els.shopGrid;
+    grid.innerHTML = '';
+    Object.keys(UPGRADE_DEFS).forEach(key => {
+      const def = UPGRADE_DEFS[key];
+      const lvl = game.upgrades[key];
+      const maxed = lvl >= def.maxLevel;
+      const cost = maxed ? null : costForLevel(key, lvl);
+      const card = document.createElement('div');
+      card.className = 'upCard';
+      const levels = Array.from({ length: def.maxLevel }).map((_, i) => `<span class="${i < lvl ? 'filled' : ''}"></span>`).join('');
+      card.innerHTML = `
+        <h3>${def.icon} ${def.name}</h3>
+        <p>${def.desc}</p>
+        <div class="upLevels">${levels}</div>
+        <button class="upBuyBtn ${maxed ? 'maxed' : ''}" ${maxed ? 'disabled' : (game.coins < cost ? 'disabled' : '')}>
+          ${maxed ? 'MAXED ✓' : '🪙 ' + cost}
+        </button>`;
+      const btn = card.querySelector('button');
+      if (!maxed) {
+        btn.addEventListener('click', () => {
+          if (game.buyUpgrade(key)) this.renderShop(game);
+        });
+      }
+      grid.appendChild(card);
+    });
+  },
+
+  showGameOver(game) {
+    this.els.finalScore.textContent = game.score;
+    this.els.finalWave.textContent = game.phase;
+    this.els.finalHigh.textContent = game.highScore;
+    this.els.newHighBadge.style.display = game.newHigh ? 'block' : 'none';
+    this.els.gameOverOverlay.classList.remove('hidden');
+  },
+  hideGameOver() { this.els.gameOverOverlay.classList.add('hidden'); },
+
+  setMuteIcon(muted) { this.els.muteBtn.textContent = muted ? '🔇' : '🔊'; },
+};
+
+/* ---------------------------------------------------------------------
+   BOOT
+--------------------------------------------------------------------- */
+(function boot() {
+  UI.cacheEls();
+  UI.initMenu();
+
+  const canvas = document.getElementById('game');
+  const stage = document.getElementById('stage');
+  const game = new Game(canvas);
+
+  /* ---- responsive sizing (maintain 16:9 letterbox) ---- */
+  function resizeStage() {
+    const w = window.innerWidth, h = window.innerHeight;
+    let stageW, stageH;
+    if (w / h > VW / VH) { stageH = h; stageW = h * (VW / VH); }
+    else { stageW = w; stageH = w * (VH / VW); }
+    stage.style.width = Math.round(stageW) + 'px';
+    stage.style.height = Math.round(stageH) + 'px';
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(VW * dpr);
+    canvas.height = Math.round(VH * dpr);
+    game.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function checkOrientation() {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    const show = isPortrait && isTouch;
+    UI.els.rotateWarn.style.display = show ? 'flex' : 'none';
+    game.inputPaused = show;
+  }
+  function onResize() { resizeStage(); checkOrientation(); }
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', () => setTimeout(onResize, 60));
+  onResize();
+
+  /* ---- coordinate mapping for mouse ---- */
+  function toCanvasCoords(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: clamp((clientX - rect.left) / rect.width, 0, 1) * VW,
+      y: clamp((clientY - rect.top) / rect.height, 0, 1) * VH,
+    };
+  }
+
+  Input.init(canvas, toCanvasCoords);
+  Input.onFireDown(() => game.beginCharge());
+  Input.onFireUp(() => game.releaseSpit());
+
+  /* ---- touch joystick + fire button ---- */
+  function updateJoyFromTouch(t) {
+    const rect = UI.els.joyBase.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    let dx = t.clientX - cx, dy = t.clientY - cy;
+    const maxR = rect.width / 2;
+    const len = Math.hypot(dx, dy);
+    if (len > maxR) { dx = dx / len * maxR; dy = dy / len * maxR; }
+    Input.joyVec.x = dx / maxR; Input.joyVec.y = dy / maxR;
+    UI.els.joyStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  }
+  function resetJoy() {
+    Input.joyActive = false; Input.joyId = null;
+    Input.joyVec.x = 0; Input.joyVec.y = 0;
+    UI.els.joyStick.style.transform = 'translate(-50%, -50%)';
+  }
+  UI.els.joyBase.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    Input.joyActive = true; Input.joyId = t.identifier;
+    updateJoyFromTouch(t);
+  }, { passive: false });
+
+  UI.els.fireBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    Input.fireId = t.identifier;
+    Input.fireOrigin = { x: t.clientX, y: t.clientY };
+    Input.fireCur = { x: t.clientX, y: t.clientY };
+    game.beginCharge();
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    let used = false;
+    for (const t of e.changedTouches) {
+      if (Input.joyId === t.identifier) { updateJoyFromTouch(t); used = true; }
+      if (Input.fireId === t.identifier) { Input.fireCur = { x: t.clientX, y: t.clientY }; used = true; }
+    }
+    if (used) e.preventDefault();
+  }, { passive: false });
+
+  function touchEndHandler(e) {
+    for (const t of e.changedTouches) {
+      if (Input.joyId === t.identifier) resetJoy();
+      if (Input.fireId === t.identifier) { Input.fireId = null; game.releaseSpit(); }
+    }
+  }
+  window.addEventListener('touchend', touchEndHandler, { passive: false });
+  window.addEventListener('touchcancel', touchEndHandler, { passive: false });
+
+  /* ---- buttons ---- */
+  UI.els.startBtn.addEventListener('click', () => {
+    Audio_.ensure(); Audio_.resume();
+    UI.els.menuOverlay.classList.add('hidden');
+    game.startNewGame();
+  });
+  UI.els.restartBtn.addEventListener('click', () => {
+    Audio_.sfxClick();
+    UI.hideGameOver();
+    game.startNewGame();
+  });
+  UI.els.nextWaveBtn.addEventListener('click', () => {
+    Audio_.sfxClick();
+    UI.hideShop();
+    game.nextWave();
+  });
+  let muted = false;
+  UI.els.muteBtn.addEventListener('click', () => {
+    muted = !muted;
+    Audio_.setMuted(muted);
+    UI.setMuteIcon(muted);
+  });
+
+  /* ---- main loop ---- */
+  let lastTime = performance.now();
+  function loop(now) {
+    let dt = (now - lastTime) / 1000;
+    lastTime = now;
+    dt = clamp(dt, 0, 0.05);
+    game.update(dt);
+    game.render();
+    UI.updateHud(game);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+
+</script>
+</body>
+</html>
